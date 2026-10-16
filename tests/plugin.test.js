@@ -33,7 +33,7 @@ test("the builder is executable and runs on node", () => {
 
 test("headlines from the editions print as plain text, never rich text", () => {
   const panel = read("Panel.qml")
-  for (const field of ["current.title", "current.kicker", "current.headline", "modelData.headline"]) {
+  for (const field of ["current.title", "current.kicker", "current.headline", "current.deck", "modelData.headline"]) {
     const at = panel.indexOf(field)
     assert.ok(at > 0, field)
     assert.match(panel.slice(at, at + 160), /textFormat: Text\.PlainText/, field)
