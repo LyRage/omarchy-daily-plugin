@@ -1,0 +1,164 @@
+#!/usr/bin/env node
+// Sets one edition of the Quattro Daily: yesterday's, unless --date says
+// otherwise. Writes editions/<date>.html, a small sidecar, the index, and
+// prints a line of JSON for the shell to read.
+//
+//   quattro-daily-build [--date YYYY-MM-DD] [--prose] [--prose-file FILE]
+//                       [--print-prompt] [--out DIR] [--offline]
+//
+// --prose asks Claude (`claude -p`) to rewrite the headlines from the facts.
+// Its answer is checked: any slot that carries a number the facts don't is
+// dropped, and if Claude is missing or fails the paper ships without it.
+
+"use strict"
+
+const fs = require("node:fs")
+const path = require("node:path")
+const crypto = require("node:crypto")
+const { execFileSync } = require("node:child_process")
+
+const ROOT = path.join(__dirname, "..")
+const Model = require(path.join(ROOT, "Model.js"))
+const C = require(path.join(ROOT, "lib/collect.js"))
+const { compose, factsText, prosePrompt, clock } = require(path.join(ROOT, "lib/compose.js"))
+const { renderEdition, renderIndex, plainText } = require(path.join(ROOT, "lib/render.js"))
+
+function args(argv) {
+  const out = { date: "", prose: false, proseFile: "", printPrompt: false, out: "", offline: false }
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i]
+    if (a === "--date") out.date = argv[++i] || ""
+    else if (a === "--prose") out.prose = true
+    else if (a === "--prose-file") out.proseFile = argv[++i] || ""
+    else if (a === "--print-prompt") out.printPrompt = true
+    else if (a === "--out") out.out = argv[++i] || ""
+    else if (a === "--offline") out.offline = true
+    else if (a === "-h" || a === "--help") { process.stdout.write(fs.readFileSync(__filename, "utf8").split("\n").slice(1, 12).join("\n").replace(/^\/\/ ?/gm, "") + "\n"); process.exit(0) }
+  }
+  return out
+}
+
+function gather(key, opt) {
+  const net = !opt.offline
+  const from = Model.shiftDateKey(key, -6)
+  const sessions = C.claudeSessions(from, key).concat(C.codexSessions(from, key)).sort((a, b) => a.firstAt - b.firstAt)
+  const desk = C.pluginDesk(Model.isWeekendEdition(key) ? from : Model.shiftDateKey(key, -2), key)
+  const usage = C.usage()
+  const theme = C.desktop()
+  const g = {
+    key: key,
+    home: process.env.HOME || "",
+    reader: C.reader(),
+    theme: theme,
+    wallpaperImage: theme.wallpaperPath ? C.imageData(theme.wallpaperPath, 1920, 70) : "",
+    kickoff: C.notifications("Kickoff", key, key),
+    kickoffWeek: Model.isWeekendEdition(key) ? C.notifications("Kickoff", from, key) : [],
+    elevation: C.elevation(key, net),
+    elevationTomorrow: C.elevation(Model.shiftDateKey(key, 1), false),
+    easel: C.easel(key, net, true),
+    easelInstalled: C.installed("easel"),
+    easelTomorrow: C.easelToday(Model.shiftDateKey(key, 1)),
+    munger: C.munger(key),
+    mungerTomorrow: C.munger(Model.shiftDateKey(key, 1)),
+    sessions: sessions,
+    usage: usage,
+    desk: desk,
+    carrel: C.carrel(),
+    weather: C.weather(key, net),
+    almanac: C.almanac(),
+    looseEnds: C.looseEnds(desk, usage),
+    week: {}
+  }
+  if (Model.isWeekendEdition(key)) {
+    for (let i = 6; i >= 0; i--) {
+      const k = Model.shiftDateKey(key, -i)
+      g.week[k] = { elevation: C.elevation(k, false), munger: C.munger(k), easel: C.easel(k, net, false) }
+    }
+  }
+  return g
+}
+
+// Never through a shell, and never without a time limit. Run from the
+// paper's own folder so the agent desk doesn't report it.
+function askClaude(prompt, cwd) {
+  const cmd = Model.proseCommand()
+  try {
+    return execFileSync(cmd[0], cmd.slice(1), { cwd: cwd, input: prompt, encoding: "utf8", timeout: Model.PROSE_TIMEOUT_MS, killSignal: "SIGKILL", stdio: ["pipe", "pipe", "ignore"], maxBuffer: 4 << 20 })
+  } catch (e) {
+    return ""
+  }
+}
+
+function readJson(file) {
+  try { return JSON.parse(fs.readFileSync(file, "utf8")) } catch (e) { return null }
+}
+
+function writeAtomic(file, text) {
+  const tmp = file + ".tmp-" + process.pid
+  fs.writeFileSync(tmp, text)
+  fs.renameSync(tmp, file)
+}
+
+function main() {
+  const opt = args(process.argv.slice(2))
+  const key = opt.date || Model.shiftDateKey(Model.dateKeyFromDate(new Date()), -1)
+  if (!Model.parseDateKey(key)) { process.stderr.write("quattro-daily-build: bad --date " + key + "\n"); process.exit(2) }
+  const outDir = opt.out || Model.dataPath(process.env.HOME)
+  const edDir = path.join(outDir, "editions")
+  fs.mkdirSync(edDir, { recursive: true })
+
+  const indexFile = path.join(outDir, "editions.json")
+  const index = Model.parseIndex(fs.existsSync(indexFile) ? fs.readFileSync(indexFile, "utf8") : "")
+  const g = gather(key, opt)
+  g.index = index
+  g.previous = readJson(path.join(edDir, Model.shiftDateKey(key, -1) + ".json"))
+
+  let ed = compose(g)
+  if (opt.printPrompt) { process.stdout.write(prosePrompt(ed) + "\n"); return }
+
+  // Prose: only ever headlines and the desk's summary, checked against the facts.
+  const facts = factsText(ed)
+  let proseRaw = ""
+  if (opt.proseFile) proseRaw = fs.readFileSync(opt.proseFile, "utf8")
+  else if (opt.prose) proseRaw = askClaude(prosePrompt(ed), outDir)
+  if (proseRaw) {
+    g.prose = Model.cleanProse(proseRaw, facts)
+    ed = compose(g)
+  }
+
+  // A rebuild that changes the news gets the Late edition seal.
+  const sideFile = path.join(edDir, key + ".json")
+  const side = readJson(sideFile) || {}
+  const hash = crypto.createHash("sha1").update(facts).digest("hex").slice(0, 16)
+  const now = Date.now()
+  let late = side.late || null
+  if (side.hash && side.hash !== hash) late = { at: now, time: clock(now) }
+  g.late = late
+
+  // Two passes: the second knows how long the first takes to read.
+  ed = compose(g)
+  let html = renderEdition(ed)
+  g.minutes = Model.readingMinutes(Model.countWords(plainText(html)))
+  ed = compose(g)
+  html = renderEdition(ed)
+
+  const file = path.join(edDir, key + ".html")
+  writeAtomic(file, html)
+  const wx = g.weather && g.weather.raw ? Model.weatherDay(g.weather.raw, Model.shiftDateKey(key, 1)) : null
+  writeAtomic(sideFile, JSON.stringify({
+    date: key, firstBuiltAt: side.firstBuiltAt || now, builtAt: now, hash: hash, late: late,
+    forecastTomorrow: wx ? { max: wx.max, min: wx.min, precip: wx.precip, code: wx.code } : null,
+    headline: ed.lead.headline, prose: g.prose || null
+  }, null, 2) + "\n")
+
+  const entry = { date: key, title: ed.title, headline: ed.lead.headline, kicker: ed.lead.kicker, minutes: g.minutes, weekend: ed.weekend, late: !!late, builtAt: now, path: file }
+  const list = index.filter(e => e.date !== key).concat([entry]).sort((a, b) => a.date < b.date ? 1 : -1)
+  writeAtomic(indexFile, JSON.stringify({ version: 1, editions: list }, null, 2) + "\n")
+  writeAtomic(path.join(edDir, "index.html"), renderIndex(list, g.theme.palette, g.reader.name))
+  // The latest edition, at a stable path.
+  writeAtomic(path.join(outDir, "latest.html"), "<!doctype html><meta charset=\"utf-8\"><meta http-equiv=\"refresh\" content=\"0; url=editions/" + list[0].date + ".html\"><title>" + Model.APP_NAME + "</title>\n")
+
+  process.stdout.write(JSON.stringify({ date: key, path: file, headline: entry.headline, minutes: entry.minutes, late: !!late, prose: !!g.prose }) + "\n")
+}
+
+main()
