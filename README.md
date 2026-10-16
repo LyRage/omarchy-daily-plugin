@@ -72,6 +72,7 @@ With The Front Page installed, its morning page gets a *Your paper* line under t
 | `notify` | `true` | A toast when the paper arrives |
 | `hour` | `5` | Yesterday's edition is set at this hour, or at the first unlock after it |
 | `prose` | `false` | Asks Claude Code to rewrite the headlines from the facts |
+| `web` | `false` | Puts each edition on claude.ai, at one private link that stays the same |
 
 ### Headlines by Claude
 
@@ -81,6 +82,21 @@ What comes back is checked before it's printed. A slot with a number that isn't 
 
 Claude runs in print mode with no tools and no MCP servers, from the paper's own folder, and is stopped after four minutes. It can only answer; nothing in the facts can get it to run a command or touch a file. It does need you signed in to Claude Code, and the facts it's sent include excerpts of your prompts, commit subjects and goal toasts. Leave `prose` off if those shouldn't leave the machine.
 
+### The paper on the web
+
+Turn on `web`, and after each edition is set the paper also goes up to claude.ai as a private artifact. It's the same link every morning, so you can keep it on your phone. The panel shows it as *On the web ↗*.
+
+Only Claude Code can publish there, so the publisher starts a short background session with `claude --bg`. That session has three tools: Read, only inside the web copy's folder; Write, only on the one file it hands the link back in; and Artifact. Everything else is refused without asking, and it's stopped after eight minutes. Its prompt names the files and the link, never anything from the paper, and tells it that the page is data to publish, not instructions.
+
+The web copy is the edition with its photos as files beside the page, and without the links to back issues, which stay on your machine.
+
+Before the first run, Claude Code has to trust the paper's folder. Run `claude` once in `~/.local/share/quattro-daily` and accept. To publish by hand:
+
+```bash
+~/.config/omarchy/plugins/atsokolas.daily/bin/quattro-daily-publish
+~/.config/omarchy/plugins/atsokolas.daily/bin/quattro-daily-publish --dry-run   # the web copy and the command, nothing sent
+```
+
 ## IPC
 
 ```bash
@@ -88,6 +104,8 @@ omarchy-shell atsokolas.daily toggle    # the panel
 omarchy-shell atsokolas.daily read      # the newest edition, in your browser
 omarchy-shell atsokolas.daily build     # set yesterday's edition now
 omarchy-shell atsokolas.daily latest    # path to the newest edition
+omarchy-shell atsokolas.daily publish   # put the newest edition on claude.ai now
+omarchy-shell atsokolas.daily web       # the claude.ai link
 omarchy-shell atsokolas.daily status    # {"latest":"2026-10-14","unread":true,…}
 ```
 
@@ -104,6 +122,7 @@ The builder also runs on its own:
 - `~/.local/share/quattro-daily/editions/<date>.json` — what it reported and the next day's forecast, for corrections
 - `~/.local/share/quattro-daily/editions/index.html` and `editions.json` — the bound volume
 - `~/.local/share/quattro-daily/latest.html` — always the newest
+- `~/.local/share/quattro-daily/web/` — the web copy, and `state.json` with its claude.ai link
 - `~/.local/state/omarchy/daily/read` — the last edition you opened
 
 It reads, but never writes: notification history, the widgets' caches and decks, `~/.claude/projects` and `~/.codex/sessions`, the agent usage meter, the git logs of every installed plugin (only commits under your own `git config user.email` count as yours), Carrel's board, Isobar's forecast cache and its settings in `~/.config/omarchy/shell.json`.
@@ -115,6 +134,8 @@ Every edition is set and kept on your machine. It quotes your prompts and commit
 The builder talks to the network only for public data: Wikipedia for the building's summary and photo, the Art Institute of Chicago for the picture's wall label, and Open-Meteo for the weather when Isobar's cache doesn't reach the day. With no Isobar place on file, it asks wttr.in where your IP address is. Run by hand with `--offline`, the builder stays entirely local. The page itself loads its typefaces from Google Fonts when you open it.
 
 With `prose` on, the facts on the front page are sent to Claude (see [Headlines by Claude](#headlines-by-claude)).
+
+With `web` on, the whole edition goes to claude.ai as a private artifact on your account. It quotes your prompts and commit subjects, so think before you share its link.
 
 ## Tests
 

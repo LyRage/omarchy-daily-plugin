@@ -55,11 +55,14 @@ BarWidget {
     function read(): void { if (root.service) root.service.open(null) }
     // Sets yesterday's edition now, whether or not it's due.
     function build(): string { if (!root.service) return "no service"; root.service.deliver(true); return "setting" }
+    // Puts the newest edition on claude.ai now.
+    function publish(): string { if (!root.service) return "no service"; root.service.publish(); return "publishing" }
+    function web(): string { return root.service ? root.service.webUrl : "" }
     function latest(): string { return root.service && root.service.latest ? root.service.latest.path : "" }
     function status(): string {
       var s = root.service
       if (!s) return "{}"
-      return JSON.stringify({ latest: s.latest ? s.latest.date : "", unread: s.unread, building: s.building, editions: s.editions.length, error: s.lastError })
+      return JSON.stringify({ latest: s.latest ? s.latest.date : "", unread: s.unread, building: s.building, editions: s.editions.length, error: s.lastError, web: s.webUrl, publishing: s.publishing })
     }
   }
 

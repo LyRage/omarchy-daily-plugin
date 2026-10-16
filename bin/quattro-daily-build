@@ -151,7 +151,7 @@ function main() {
     headline: ed.lead.headline, prose: g.prose || null
   }, null, 2) + "\n")
 
-  const entry = { date: key, title: ed.title, headline: ed.lead.headline, kicker: ed.lead.kicker, minutes: g.minutes, weekend: ed.weekend, late: !!late, builtAt: now, path: file }
+  const entry = { date: key, title: ed.title, headline: ed.lead.headline, kicker: ed.lead.kicker, deck: ed.lead.deck || "", minutes: g.minutes, weekend: ed.weekend, late: !!late, builtAt: now, path: file }
   const list = index.filter(e => e.date !== key).concat([entry]).sort((a, b) => a.date < b.date ? 1 : -1)
   writeAtomic(indexFile, JSON.stringify({ version: 1, editions: list }, null, 2) + "\n")
   writeAtomic(path.join(edDir, "index.html"), renderIndex(list, g.theme.palette, g.reader.name))

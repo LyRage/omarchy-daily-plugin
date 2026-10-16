@@ -17,6 +17,7 @@ Item {
   readonly property string dataDir: Model.dataPath(home)
   readonly property string stateDir: Model.statePath(home)
   readonly property string builder: decodeURIComponent(String(Qt.resolvedUrl("bin/quattro-daily-build")).replace(/^file:\/\//, ""))
+  readonly property string publisher: decodeURIComponent(String(Qt.resolvedUrl("bin/quattro-daily-publish")).replace(/^file:\/\//, ""))
   readonly property var lock: shell && typeof shell.serviceFor === "function" ? shell.serviceFor("omarchy.lock") : null
 
   function setting(name, fallback) {
@@ -27,6 +28,7 @@ Item {
   readonly property int hour: Model.intSetting(setting("hour", 5), 5, 0, 23)
   readonly property bool notify: Model.boolSetting(setting("notify", true), true)
   readonly property bool prose: Model.boolSetting(setting("prose", false), false)
+  readonly property bool web: Model.boolSetting(setting("web", false), false)
 
   // The bound volume, newest first.
   property var editions: []
@@ -40,6 +42,10 @@ Item {
   property string buildingKey: ""
   property string lastError: ""
   property bool _announce: false
+  // The copy on claude.ai: the same private link, updated each morning.
+  property string webUrl: ""
+  property string webDate: ""
+  property bool publishing: false
   // The last edition the press failed on, so a broken build isn't retried
   // every minute.
   property string failedKey: ""
@@ -87,6 +93,31 @@ Item {
       toastProcess.command = Model.toastCommand("Your paper is here", r.headline + " · " + Model.readingLine(r.minutes))
       toastProcess.running = true
     }
+    if (web) publish()
+  }
+
+  // Puts the newest edition on claude.ai. The publisher runs a locked-down
+  // Claude Code session and takes a few minutes; the link comes back in
+  // web/state.json.
+  function publish() {
+    if (!active || publishing || !latest) return
+    publishing = true
+    publishProcess.out = ""
+    publishProcess.command = ["node", publisher]
+    publishProcess.running = true
+  }
+
+  function published(code) {
+    if (!publishing) return
+    publishing = false
+    webState.reload()
+    var r = null
+    try { r = JSON.parse(String(publishProcess.out).trim().split("\n").pop()) } catch (e) {}
+    if (code !== 0 || !r || !r.ok) lastError = "The web copy didn't go up" + (r && r.error ? ": " + r.error : ".")
+  }
+
+  function openWeb() {
+    if (webUrl !== "") Qt.openUrlExternally(webUrl)
   }
 
   function open(entry) {
@@ -146,6 +177,37 @@ Item {
       buildProcess.running = false
       root.finished(-1)
     }
+  }
+
+  Process {
+    id: publishProcess
+    property string out: ""
+    stdout: SplitParser { onRead: function(line) { publishProcess.out += line + "\n" } }
+    onExited: function(code) { root.published(code) }
+  }
+
+  Timer {
+    interval: 10 * 60000
+    running: root.publishing
+    onTriggered: {
+      publishProcess.running = false
+      root.published(-1)
+    }
+  }
+
+  FileView {
+    id: webState
+    path: root.dataDir + "/web/state.json"
+    printErrors: false
+    watchChanges: true
+    onFileChanged: reload()
+    onLoaded: {
+      var st = null
+      try { st = JSON.parse(text()) } catch (e) {}
+      root.webUrl = st ? Model.artifactUrl(st.url) : ""
+      root.webDate = st && st.date ? String(st.date) : ""
+    }
+    onLoadFailed: { root.webUrl = ""; root.webDate = "" }
   }
 
   Process { id: toastProcess }

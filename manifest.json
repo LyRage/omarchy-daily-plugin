@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "atsokolas.daily",
   "name": "Quattro Daily",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": "atsokolas",
   "license": "MIT",
   "description": "A morning newspaper about yesterday on your machine, set from your plugins, agent work, git and the weather, and laid on your wallpaper.",
@@ -30,7 +30,8 @@
     "defaults": {
       "notify": true,
       "hour": 5,
-      "prose": false
+      "prose": false,
+      "web": false
     },
     "schema": [
       {
@@ -55,6 +56,13 @@
         "label": "Headlines by Claude",
         "defaultValue": false,
         "description": "Asks Claude Code to rewrite the headlines from the facts. Needs claude on your PATH; sends the front page's facts to Claude."
+      },
+      {
+        "key": "web",
+        "type": "boolean",
+        "label": "A copy on claude.ai",
+        "defaultValue": false,
+        "description": "After each edition is set, a short Claude Code session publishes it to a private claude.ai link that stays the same every day."
       }
     ]
   }
