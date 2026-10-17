@@ -33,8 +33,10 @@ Nothing is invented. A section with nothing to report says so, or stays out.
 ## Requirements
 
 - Omarchy Quattro (Quickshell plugin support)
-- `node`, `curl`, ImageMagick (`magick`) — all on a standard Omarchy install
+- `node`, `curl`, ImageMagick (`magick`) and `git` — all on a standard Omarchy install
 - Network access for the building's photo, the picture's wall label and, if Isobar has no forecast cached, Open-Meteo (see [Privacy](#privacy))
+- Optional: the [Claude Code](https://claude.com/claude-code) CLI (`claude`, signed in), only for the `prose` and `web` settings. Both are off by default; without them the paper never runs Claude.
+- Optional: the GitHub CLI (`gh`). If it's installed, the classifieds check `gh auth status`.
 
 Elevation, Easel, Munger, Kickoff, Isobar and Carrel are all optional. The paper reads whichever you have.
 
@@ -49,6 +51,20 @@ The first edition is set at 5 am, or at your first unlock after that if the scre
 ```bash
 omarchy-shell atsokolas.daily build
 ```
+
+## Remove
+
+```bash
+omarchy plugin remove atsokolas.daily
+```
+
+That takes the plugin off the bar and out of `~/.config/omarchy/plugins`. Your editions stay where they are; to remove them too:
+
+```bash
+rm -rf ~/.local/share/quattro-daily ~/.local/state/omarchy/daily
+```
+
+If you turned on `web`, the copy on claude.ai stays on your account until you delete it there.
 
 ## Keys
 
@@ -86,7 +102,7 @@ Claude runs in print mode with no tools and no MCP servers, from the paper's own
 
 Turn on `web`, and after each edition is set the paper also goes up to claude.ai as a private artifact. It's the same link every morning, so you can keep it on your phone. The panel shows it as *On the web ↗*.
 
-Only Claude Code can publish there, so the publisher starts a short background session with `claude --bg`. That session has three tools: Read, only inside the web copy's folder; Write, only on the one file it hands the link back in; and Artifact. Everything else is refused without asking, and it's stopped after eight minutes. Its prompt names the files and the link, never anything from the paper, and tells it that the page is data to publish, not instructions.
+Only Claude Code can publish there, so the publisher starts a short background session with `claude --bg`. That session has three tools, Read, Write and Artifact, and no MCP servers. Read is allowed only inside the web copy's folder, and Write only on the one file it hands the link back in (`Edit(…/web/link.txt)`, which is how Claude Code spells a write rule). It runs in `dontAsk` mode, so anything else is refused without asking, and it's stopped after eight minutes. Its prompt names the files and the link, never anything from the paper, and tells it that the page is data to publish, not instructions. The link it hands back is used only if it's a `https://claude.ai/…/artifact/…` address.
 
 The web copy is the edition with its photos as files beside the page, and without the links to back issues, which stay on your machine.
 
@@ -126,6 +142,15 @@ The builder also runs on its own:
 - `~/.local/state/omarchy/daily/read` — the last edition you opened
 
 It reads, but never writes: notification history, the widgets' caches and decks, `~/.claude/projects` and `~/.codex/sessions`, the agent usage meter, the git logs of every installed plugin (only commits under your own `git config user.email` count as yours), Carrel's board, Isobar's forecast cache and its settings in `~/.config/omarchy/shell.json`.
+
+## Limits
+
+The builder treats everything it fetches, and every other plugin's cache, as untrusted:
+
+- Every fetch is HTTPS only, redirects included, with a time limit and a size limit (2 MB for JSON, 24 MB for a photo) that holds for streamed answers too. Anything over is refused, not cut short.
+- Photos are fetched only from Wikimedia's hosts, and every picture must be a JPEG, PNG or WebP by its own first bytes. ImageMagick is told the format, so it can't pick another decoder, and it works within memory, size and time limits in a private temporary folder.
+- Every string on the page is HTML-escaped; numbers are printed as numbers; images go in only as the builder's own `data:` JPEGs. The panel shows everything as plain text.
+- The index can only point the panel at an edition's own file, and what Claude Code hands back (headlines, the link) is size-limited and checked before it's used.
 
 ## Privacy
 

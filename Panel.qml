@@ -185,6 +185,7 @@ Panel {
           }
 
           Text {
+            textFormat: Text.PlainText
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
             width: ear.width + Style.space(6)
@@ -290,6 +291,7 @@ Panel {
               onActivated: root.openWeb()
             }
             Text {
+              textFormat: Text.PlainText
               visible: root.publishing && root.cursor === 0
               text: "Publishing…"
               color: root.dim
@@ -299,6 +301,7 @@ Panel {
             }
             Item { Layout.fillWidth: true }
             Text {
+              textFormat: Text.PlainText
               text: root.service.streakLine
               visible: text !== "" && root.cursor === 0
               color: root.dim
@@ -310,6 +313,7 @@ Panel {
         }
 
         Text {
+          textFormat: Text.PlainText
           Layout.fillWidth: true
           Layout.topMargin: Style.space(14)
           visible: root.current === null
@@ -332,6 +336,7 @@ Panel {
 
           Rule { weight: 2 }
           Text {
+            textFormat: Text.PlainText
             Layout.fillWidth: true
             Layout.topMargin: Style.space(5)
             Layout.bottomMargin: Style.space(3)
@@ -375,6 +380,7 @@ Panel {
               }
 
               Text {
+                textFormat: Text.PlainText
                 id: rowDate
                 x: Style.space(10)
                 width: Style.space(84)
@@ -402,6 +408,7 @@ Panel {
                 elide: Text.ElideRight
               }
               Text {
+                textFormat: Text.PlainText
                 id: rowMin
                 anchors.right: parent.right
                 anchors.rightMargin: Style.space(4)
@@ -426,6 +433,7 @@ Panel {
         }
 
         Text {
+          textFormat: Text.PlainText
           Layout.fillWidth: true
           Layout.topMargin: Style.space(10)
           visible: root.service.building || root.service.lastError !== ""
@@ -440,6 +448,7 @@ Panel {
         // ---- Colophon ----------------------------------------------------
         DoubleRule { Layout.topMargin: Style.space(14) }
         Text {
+          textFormat: Text.PlainText
           Layout.fillWidth: true
           Layout.topMargin: Style.space(5)
           horizontalAlignment: Text.AlignHCenter
@@ -471,6 +480,7 @@ Panel {
   }
 
   component Folio: Text {
+    textFormat: Text.PlainText
     color: root.dim
     font.family: root.fontFamily
     font.pixelSize: Style.font.caption
@@ -481,6 +491,7 @@ Panel {
   }
 
   component PaperLink: Text {
+    textFormat: Text.PlainText
     id: link
     property string label: ""
     property color tint: root.accent

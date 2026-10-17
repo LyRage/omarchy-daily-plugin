@@ -139,3 +139,43 @@ test("the index lists every edition with a link", () => {
   assert.ok(html.includes('href="2026-10-14.html"'))
   assert.ok(html.includes("Late"))
 })
+
+const PNG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+
+test("what the APIs and decks say is printed as text, never as markup", () => {
+  const evil = '"><img src=x onerror=alert(1)><font color=red>'
+  const g = gathering()
+  Object.assign(g.elevation, { name: evil, architect: evil, place: evil, style: evil, extract: evil + ". Two." })
+  Object.assign(g.easel, { title: evil, artist: evil, medium: evil, accession: evil })
+  Object.assign(g.munger, { text: evil, tag: evil })
+  g.theme.wallpaper = evil
+  const html = renderEdition(compose(g))
+  assert.ok(!html.includes("<img src=x"))
+  assert.ok(!html.includes("<font"))
+  assert.ok(html.includes("&lt;img src=x onerror=alert(1)&gt;&lt;font color=red&gt;"))
+})
+
+test("only the builder's own pictures and numbers reach the page", () => {
+  const g = gathering()
+  g.elevation.image = 'https://evil.example/x.jpg" onerror="alert(1)'
+  g.easel.image = "data:image/svg+xml;base64,PHN2Zz48L3N2Zz4="
+  g.wallpaperImage = 'x") ; } body { background: url("https://evil.example/'
+  g.elevation.position = '1"><script>alert(1)</script>'
+  g.munger.card = "<b>9</b>"
+  let html = renderEdition(compose(g))
+  assert.ok(!html.includes("evil.example"))
+  assert.ok(!html.includes("image/svg"))
+  assert.ok(!html.includes("<script>alert(1)"))
+  assert.ok(!html.includes("<b>9</b>"))
+  assert.ok(html.includes("--wall: none"))
+  g.elevation.image = PNG
+  g.wallpaperImage = PNG
+  html = renderEdition(compose(g))
+  assert.ok(html.includes('<img src="' + PNG + '"'))
+  assert.ok(html.includes('--wall: url("' + PNG + '")'))
+})
+
+test("the index prints minutes as a number", () => {
+  const html = renderIndex([{ date: "2026-10-14", headline: "<i>Lakeside</i>", minutes: "<b>3</b>", weekend: false, late: false }], null, "Ada")
+  assert.ok(!html.includes("<b>3</b>") && !html.includes("<i>Lakeside"))
+})

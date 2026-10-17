@@ -132,20 +132,25 @@ function parseIndex(text) {
   try { data = JSON.parse(String(text || "")) } catch (e) { return [] }
   var list = data && Array.isArray(data.editions) ? data.editions : []
   var out = []
-  for (var i = 0; i < list.length; i++) {
+  var text = function(v, max) { return typeof v === "string" ? v.slice(0, max) : "" }
+  // Ten years of mornings is plenty for the panel.
+  for (var i = 0; i < list.length && out.length < 3660; i++) {
     var e = list[i]
-    if (!e || !parseDateKey(e.date)) continue
+    if (!e || typeof e.date !== "string" || !parseDateKey(e.date)) continue
+    // The edition's own file, or none: the panel opens this path.
+    var p = typeof e.path === "string" && e.path.charAt(0) === "/" && e.path.indexOf("/../") < 0 &&
+      e.path.slice(-("/editions/" + e.date + ".html").length) === "/editions/" + e.date + ".html" ? e.path : ""
     out.push({
       date: e.date,
-      title: String(e.title || ""),
-      headline: String(e.headline || ""),
-      deck: String(e.deck || ""),
-      kicker: String(e.kicker || ""),
+      title: text(e.title, 120),
+      headline: text(e.headline, 300),
+      deck: text(e.deck, 400),
+      kicker: text(e.kicker, 80),
       minutes: Math.max(1, Math.round(Number(e.minutes) || 1)),
       weekend: e.weekend === true,
       late: e.late === true,
       builtAt: Number(e.builtAt) || 0,
-      path: String(e.path || "")
+      path: p
     })
   }
   out.sort(function(a, b) { return a.date < b.date ? 1 : a.date > b.date ? -1 : 0 })
@@ -557,14 +562,15 @@ function proseCommand() {
 // The web copy goes up through a short background Claude Code session, the
 // only kind that can publish to claude.ai. It gets Read, only inside the web
 // copy's folder; Write, only on the file it hands the link back in; and
-// Artifact. Everything else is refused without asking.
+// Artifact. Everything else is refused without asking. Path rules for any
+// tool that writes are spelled Edit(...); Write(...) would match nothing.
 var PUBLISH_TIMEOUT_MS = 480000
 
 function publishCommand(webDir, prompt) {
   var dir = "/" + String(webDir || "")
   return ["claude", "--bg", "--strict-mcp-config", "--tools", "Read,Write,Artifact",
     "--permission-mode", "dontAsk",
-    "--allowedTools", "Artifact", "Read(" + dir + "/**)", "Write(" + dir + "/link.txt)",
+    "--allowedTools", "Artifact", "Read(" + dir + "/**)", "Edit(" + dir + "/link.txt)",
     "--", String(prompt || "")]
 }
 

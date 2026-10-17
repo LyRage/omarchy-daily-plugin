@@ -83,7 +83,7 @@ function gather(key, opt) {
 function askClaude(prompt, cwd) {
   const cmd = Model.proseCommand()
   try {
-    return execFileSync(cmd[0], cmd.slice(1), { cwd: cwd, input: prompt, encoding: "utf8", timeout: Model.PROSE_TIMEOUT_MS, killSignal: "SIGKILL", stdio: ["pipe", "pipe", "ignore"], maxBuffer: 4 << 20 })
+    return execFileSync(cmd[0], cmd.slice(1), { cwd: cwd, input: prompt, encoding: "utf8", timeout: Model.PROSE_TIMEOUT_MS, killSignal: "SIGKILL", stdio: ["pipe", "pipe", "ignore"], maxBuffer: 256 << 10 })
   } catch (e) {
     return ""
   }

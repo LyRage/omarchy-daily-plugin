@@ -20,8 +20,8 @@ test("links to back issues stay on the machine", () => {
 })
 
 test("yesterday's photos are removed from the artifact", () => {
-  assert.deepEqual(fileChanges(["img/a.jpg", "img/b.jpg"], ["img/b.jpg", "img/c.jpg"]), { keep: ["img/b.jpg", "img/c.jpg"], remove: ["img/a.jpg"] })
-  assert.deepEqual(fileChanges(undefined, ["img/c.jpg"]).remove, [])
+  assert.deepEqual(fileChanges(["img/aaaaaaaaaaaa.jpg", "img/bbbbbbbbbbbb.jpg"], ["img/bbbbbbbbbbbb.jpg", "img/cccccccccccc.jpg"]), { keep: ["img/bbbbbbbbbbbb.jpg", "img/cccccccccccc.jpg"], remove: ["img/aaaaaaaaaaaa.jpg"] })
+  assert.deepEqual(fileChanges(undefined, ["img/cccccccccccc.jpg"]).remove, [])
 })
 
 test("the publishing session gets Artifact, and Read and Write only on the web copy", () => {
@@ -31,8 +31,9 @@ test("the publishing session gets Artifact, and Read and Write only on the web c
   assert.equal(cmd[cmd.indexOf("--tools") + 1], "Read,Write,Artifact")
   assert.equal(cmd[cmd.indexOf("--permission-mode") + 1], "dontAsk")
   assert.ok(cmd.includes("Read(//home/ada/.local/share/quattro-daily/web/**)"))
-  assert.ok(cmd.includes("Write(//home/ada/.local/share/quattro-daily/web/link.txt)"))
-  assert.ok(!cmd.some(a => /Bash|Edit|dangerously|bypass/.test(a)))
+  assert.ok(cmd.includes("Edit(//home/ada/.local/share/quattro-daily/web/link.txt)"), "path rules for writing are spelled Edit")
+  assert.ok(!cmd.some(a => /^Write\(/.test(a)), "a Write(path) rule would match nothing")
+  assert.ok(!cmd.some(a => /Bash|dangerously|bypass|^Edit$|Edit\(\/\/[^)]*\*/.test(a)), "no shell, no blanket edits")
   assert.equal(cmd[cmd.length - 2], "--", "the prompt can't be read as a flag")
 })
 

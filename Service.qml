@@ -163,7 +163,8 @@ Item {
   Process {
     id: buildProcess
     property string out: ""
-    stdout: SplitParser { onRead: function(line) { buildProcess.out += line + "\n" } }
+    // Only the last line is read; keep a little more than that.
+    stdout: SplitParser { onRead: function(line) { buildProcess.out = (buildProcess.out + line + "\n").slice(-65536) } }
     onExited: function(code) { root.finished(code) }
   }
 
@@ -182,7 +183,7 @@ Item {
   Process {
     id: publishProcess
     property string out: ""
-    stdout: SplitParser { onRead: function(line) { publishProcess.out += line + "\n" } }
+    stdout: SplitParser { onRead: function(line) { publishProcess.out = (publishProcess.out + line + "\n").slice(-65536) } }
     onExited: function(code) { root.published(code) }
   }
 
@@ -205,7 +206,7 @@ Item {
       var st = null
       try { st = JSON.parse(text()) } catch (e) {}
       root.webUrl = st ? Model.artifactUrl(st.url) : ""
-      root.webDate = st && st.date ? String(st.date) : ""
+      root.webDate = st && Model.parseDateKey(st.date) ? String(st.date) : ""
     }
     onLoadFailed: { root.webUrl = ""; root.webDate = "" }
   }
