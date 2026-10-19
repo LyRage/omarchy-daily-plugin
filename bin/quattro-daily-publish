@@ -17,6 +17,7 @@ const ROOT = path.join(__dirname, "..")
 const Model = require(path.join(ROOT, "Model.js"))
 const { webCopy, fileChanges } = require(path.join(ROOT, "lib/web.js"))
 const { LINK_MAX, CACHE_JSON_MAX } = require(path.join(ROOT, "lib/fetch.js"))
+const { privately } = require(path.join(ROOT, "lib/private.js"))
 
 function args(argv) {
   const out = { date: "", dryRun: false }
@@ -71,6 +72,7 @@ function main() {
   const webDir = path.join(dataDir, "web")
   const stateFile = path.join(webDir, "state.json")
   const linkFile = path.join(webDir, "link.txt")
+  privately(dataDir)
 
   const indexFile = path.join(dataDir, "editions.json")
   const index = Model.parseIndex(fs.existsSync(indexFile) ? fs.readFileSync(indexFile, "utf8") : "")

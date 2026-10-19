@@ -141,6 +141,8 @@ The builder also runs on its own:
 - `~/.local/share/quattro-daily/web/` — the web copy, and `state.json` with its claude.ai link
 - `~/.local/state/omarchy/daily/read` — the last edition you opened
 
+The editions quote your own prompts, so everything under `~/.local/share/quattro-daily` is made readable only by you: folders 0700, files 0600. A build also tightens anything an older version left open.
+
 It reads, but never writes: notification history, the widgets' caches and decks, `~/.claude/projects` and `~/.codex/sessions`, the agent usage meter, the git logs of every installed plugin (only commits under your own `git config user.email` count as yours), Carrel's board, Isobar's forecast cache and its settings in `~/.config/omarchy/shell.json`.
 
 ## Limits

@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "atsokolas.daily",
   "name": "Quattro Daily",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "author": "atsokolas",
   "license": "MIT",
   "description": "A morning newspaper about yesterday on your machine, set from your plugins, agent work, git and the weather, and laid on your wallpaper.",

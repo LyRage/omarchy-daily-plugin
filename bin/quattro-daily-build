@@ -22,6 +22,7 @@ const Model = require(path.join(ROOT, "Model.js"))
 const C = require(path.join(ROOT, "lib/collect.js"))
 const { compose, factsText, prosePrompt, clock } = require(path.join(ROOT, "lib/compose.js"))
 const { renderEdition, renderIndex, plainText } = require(path.join(ROOT, "lib/render.js"))
+const { privately } = require(path.join(ROOT, "lib/private.js"))
 
 function args(argv) {
   const out = { date: "", prose: false, proseFile: "", printPrompt: false, out: "", offline: false }
@@ -105,6 +106,7 @@ function main() {
   if (!Model.parseDateKey(key)) { process.stderr.write("quattro-daily-build: bad --date " + key + "\n"); process.exit(2) }
   const outDir = opt.out || Model.dataPath(process.env.HOME)
   const edDir = path.join(outDir, "editions")
+  privately(outDir)
   fs.mkdirSync(edDir, { recursive: true })
 
   const indexFile = path.join(outDir, "editions.json")
