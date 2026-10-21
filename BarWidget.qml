@@ -7,7 +7,7 @@ import "Model.js" as Model
 
 BarWidget {
   id: root
-  moduleName: "atsokolas.daily"
+  moduleName: "lyrage.daily"
 
   function injectPanel() {
     var target = panelLoader.item
@@ -47,7 +47,7 @@ BarWidget {
   onSettingsChanged: injectPanel()
 
   IpcHandler {
-    target: "atsokolas.daily"
+    target: "lyrage.daily"
     function open(): void { root.open() }
     function close(): void { root.close() }
     function toggle(): void { root.togglePanel() }

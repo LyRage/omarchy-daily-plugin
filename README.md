@@ -43,19 +43,19 @@ Elevation, Easel, Munger, Kickoff, Isobar and Carrel are all optional. The paper
 ## Install
 
 ```bash
-omarchy plugin add https://github.com/atsokolas/omarchy-daily-plugin.git --enable
+omarchy plugin add https://github.com/LyRage/omarchy-daily-plugin.git --enable
 ```
 
 The first edition is set at 5 am, or at your first unlock after that if the screen is locked. To set one now:
 
 ```bash
-omarchy-shell atsokolas.daily build
+omarchy-shell lyrage.daily build
 ```
 
 ## Remove
 
 ```bash
-omarchy plugin remove atsokolas.daily
+omarchy plugin remove lyrage.daily
 ```
 
 That takes the plugin off the bar and out of `~/.config/omarchy/plugins`. Your editions stay where they are; to remove them too:
@@ -109,27 +109,27 @@ The web copy is the edition with its photos as files beside the page, and withou
 Before the first run, Claude Code has to trust the paper's folder. Run `claude` once in `~/.local/share/quattro-daily` and accept. To publish by hand:
 
 ```bash
-~/.config/omarchy/plugins/atsokolas.daily/bin/quattro-daily-publish
-~/.config/omarchy/plugins/atsokolas.daily/bin/quattro-daily-publish --dry-run   # the web copy and the command, nothing sent
+~/.config/omarchy/plugins/lyrage.daily/bin/quattro-daily-publish
+~/.config/omarchy/plugins/lyrage.daily/bin/quattro-daily-publish --dry-run   # the web copy and the command, nothing sent
 ```
 
 ## IPC
 
 ```bash
-omarchy-shell atsokolas.daily toggle    # the panel
-omarchy-shell atsokolas.daily read      # the newest edition, in your browser
-omarchy-shell atsokolas.daily build     # set yesterday's edition now
-omarchy-shell atsokolas.daily latest    # path to the newest edition
-omarchy-shell atsokolas.daily publish   # put the newest edition on claude.ai now
-omarchy-shell atsokolas.daily web       # the claude.ai link
-omarchy-shell atsokolas.daily status    # {"latest":"2026-10-14","unread":true,…}
+omarchy-shell lyrage.daily toggle    # the panel
+omarchy-shell lyrage.daily read      # the newest edition, in your browser
+omarchy-shell lyrage.daily build     # set yesterday's edition now
+omarchy-shell lyrage.daily latest    # path to the newest edition
+omarchy-shell lyrage.daily publish   # put the newest edition on claude.ai now
+omarchy-shell lyrage.daily web       # the claude.ai link
+omarchy-shell lyrage.daily status    # {"latest":"2026-10-14","unread":true,…}
 ```
 
 The builder also runs on its own:
 
 ```bash
-~/.config/omarchy/plugins/atsokolas.daily/bin/quattro-daily-build --date 2026-10-14
-~/.config/omarchy/plugins/atsokolas.daily/bin/quattro-daily-build --print-prompt
+~/.config/omarchy/plugins/lyrage.daily/bin/quattro-daily-build --date 2026-10-14
+~/.config/omarchy/plugins/lyrage.daily/bin/quattro-daily-build --print-prompt
 ```
 
 ## Data

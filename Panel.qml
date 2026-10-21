@@ -7,8 +7,8 @@ import "Model.js" as Model
 
 Panel {
   id: root
-  moduleName: "atsokolas.daily"
-  ipcTarget: "atsokolas.daily"
+  moduleName: "lyrage.daily"
+  ipcTarget: "lyrage.daily"
   manageIpc: false
 
   property var anchorItem: null

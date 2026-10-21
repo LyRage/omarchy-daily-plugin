@@ -9,7 +9,7 @@ const qml = fs.readdirSync(root).filter(f => f.endsWith(".qml"))
 
 test("the manifest's entry points exist and every default has a schema row", () => {
   const manifest = JSON.parse(read("manifest.json"))
-  assert.equal(manifest.id, "atsokolas.daily")
+  assert.equal(manifest.id, "lyrage.daily")
   for (const file of Object.values(manifest.entryPoints)) assert.ok(fs.existsSync(path.join(root, file)), file)
   const keys = manifest.barWidget.schema.map(s => s.key)
   for (const key of Object.keys(manifest.barWidget.defaults)) assert.ok(keys.includes(key), key)
